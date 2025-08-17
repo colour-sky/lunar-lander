@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>月球着陆器</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            touch-action: none;
+            font-family: 'Arial Rounded MT Bold', 'Segoe UI', sans-serif;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background-color: #000033;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 0.1s, background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        #restartBtn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            color: white;
+            border-radius: 5px;
+            font-size: 16px;
+            display: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #restartBtn:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        #fuelGauge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 200px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #fuelBar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
+            transition: width 0.1s;
+        }
+        
+        #score {
+            position: fixed;
+            top: 50px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+        }
+        
+        #message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            display: none;
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #4a8eff;
+            box-shadow: 0 0 20px rgba(74, 142, 255, 0.5);
+            z-index: 100;
+            max-width: 80%;
+        }
+        
+        #message h2 {
+            margin-top: 0;
+            color: #4a8eff;
+            font-size: 32px;
+        }
+        
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0a0a2a 0%, #000000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #title {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #4a8eff;
+            text-shadow: 0 0 10px rgba(74, 142, 255, 0.8);
+            letter-spacing: 2px;
+        }
+        
+        #subtitle {
+            font-size: 24px;
+            margin-bottom: 40px;
+            color: #aaccff;
+            max-width: 600px;
+            line-height: 1.5;
+        }
+        
+        #startButton {
+            padding: 15px 50px;
+            font-size: 22px;
+            background: linear-gradient(45deg, #1a5fad, #4a8eff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        #startButton:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #4a8eff, #1a5fad);
+        }
+        
+        #startButton:active {
+            transform: translateY(1px);
+        }
+        
+        .instructions {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            max-width: 600px;
+            border: 1px solid #4a8eff;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #4a8eff;
+            margin-top: 0;
+        }
+        
+        .key {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin: 0 5px;
+            font-family: monospace;
+        }
+        
+        .objective {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .objective-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 40px;
+            text-align: center;
+            color: #4a8eff;
+        }
+        
+        .controls-demo {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        
+        .demo-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(74, 142, 255, 0.2);
+            border: 2px solid #4a8eff;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @media (max-width: 600px) {
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+            }
+            
+            #fuelGauge {
+                width: 150px;
+            }
+            
+            #title {
+                font-size: 36px;
+            }
+            
+            #subtitle {
+                font-size: 18px;
+            }
+            
+            .instructions {
+                padding: 15px;
+            }
+            
+            .demo-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1 id="title">月球着陆器</h1>
+        <p id="subtitle">驾驶你的飞船安全降落在月球表面的平台上</p>
+        
+        <div class="instructions">
+            <h3>游戏目标</h3>
+            <div class="objective">
+                <div class="objective-icon">✓</div>
+                <div>控制飞船安全降落在绿色平台上</div>
+            </div>
+            <div class="objective">
+                <div class="objective-icon">⚠️</div>
+                <div>降落速度不能超过1单位/秒</div>
+            </div>
+            <div class="objective">
+                <div class="objective-icon">⚠️</div>
+                <div>着陆角度不能超过20度</div>
+            </div>
+            <div class="objective">
+                <div class="objective-icon">⛽</div>
+                <div>合理使用燃料 - 剩余燃料越多得分越高</div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>操作方式</h3>
+            <p>键盘控制:</p>
+            <p><span class="key">W</span> 或 <span class="key">↑</span> - 推进器</p>
+            <p><span class="key">A</span> 或 <span class="key">←</span> - 向左旋转</p>
+            <p><span class="key">D</span> 或 <span class="key">→</span> - 向右旋转</p>
+            
+            <p style="margin-top: 20px;">触摸/鼠标控制:</p>
+            <div class="controls-demo">
+                <div class="demo-btn">←</div>
+                <div class="demo-btn">↑</div>
+                <div class="demo-btn">→</div>
+            </div>
+        </div>
+        
+        <button id="startButton">开始游戏</button>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="controls">
+        <div class="control-btn" id="leftBtn">←</div>
+        <div class="control-btn" id="thrustBtn">↑</div>
+        <div class="control-btn" id="rightBtn">→</div>
+    </div>
+    
+    <button id="restartBtn">重新开始</button>
+
+    <div id="fuelGauge">
+        <div id="fuelBar"></div>
+    </div>
+
+    <div id="score">分数: 0</div>
+
+    <div id="message">
+        <h2 id="messageTitle"></h2>
+        <p id="messageText"></p>
+    </div>
+
+    <script>
+        // 游戏变量
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const thrustBtn = document.getElementById('thrustBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const fuelBar = document.getElementById('fuelBar');
+        const scoreDisplay = document.getElementById('score');
+        const message = document.getElementById('message');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        
+        // 设置画布大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // 游戏状态
+        let gameState = {
+            ship: {
+                x: 0,
+                y: 0,
+                width: 30,
+                height: 40,
+                velocityX: 0,
+                velocityY: 0,
+                rotation: 0,
+                thrusting: false,
+                landed: false,
+                crashed: false,
+                fuel: 100,
+                score: 0
+            },
+            terrain: [],
+            platforms: [],
+            stars: [],
+            keys: {
+                left: false,
+                right: false,
+                up: false
+            },
+            gameOver: false,
+            lastTime: 0,
+            gravity: 0.1,
+            thrustPower: 0.15,
+            rotationSpeed: 3,
+            terrainSegments: 20,
+            terrainMinHeight: 0.6,
+            terrainMaxHeight: 0.9,
+            safeLandingSpeed: 1,
+            safeLandingAngle: 20
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            // 重置飞船
+            gameState.ship = {
+                x: canvas.width / 2,
+                y: 100,
+                width: 30,
+                height: 40,
+                velocityX: 0,
+                velocityY: 0,
+                rotation: 0,
+                thrusting: false,
+                landed: false,
+                crashed: false,
+                fuel: 100,
+                score: 0
+            };
+            
+            gameState.gameOver = false;
+            gameState.stars = [];
+            gameState.terrain = [];
+            gameState.platforms = [];
+            
+            // 生成星星
+            for (let i = 0; i < 100; i++) {
+                gameState.stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 1
+                });
+            }
+            
+            // 生成地形
+            generateTerrain();
+            
+            // 重置显示
+            fuelBar.style.width = '100%';
+            fuelBar.style.backgroundColor = '#00ff00';
+            scoreDisplay.textContent = '分数: 0';
+            message.style.display = 'none';
+            restartBtn.style.display = 'none';
+        }
+        
+        // 生成随机地形
+        function generateTerrain() {
+            const segmentWidth = canvas.width / gameState.terrainSegments;
+            let prevHeight = canvas.height * (Math.random() * 
+                (gameState.terrainMaxHeight - gameState.terrainMinHeight) + gameState.terrainMinHeight);
+            
+            // 创建第一个点
+            gameState.terrain.push({ x: 0, y: canvas.height });
+            gameState.terrain.push({ x: 0, y: prevHeight });
+            
+            // 生成中间点
+            for (let i = 1; i < gameState.terrainSegments; i++) {
+                const x = i * segmentWidth;
+                const heightVariation = canvas.height * 0.1;
+                const newHeight = Math.min(
+                    canvas.height * gameState.terrainMaxHeight,
+                    Math.max(
+                        canvas.height * gameState.terrainMinHeight,
+                        prevHeight + (Math.random() * heightVariation * 2 - heightVariation)
+                    )
+                );
+                
+                gameState.terrain.push({ x, y: newHeight });
+                prevHeight = newHeight;
+                
+                // 随机创建着陆平台(平坦区域)
+                if (Math.random() > 0.7 && i < gameState.terrainSegments - 3) {
+                    const platformWidth = segmentWidth * (Math.floor(Math.random() * 3) + 2);
+                    const platformEnd = Math.min(i + platformWidth / segmentWidth, gameState.terrainSegments - 1);
+                    
+                    gameState.platforms.push({
+                        x1: x,
+                        x2: x + platformWidth,
+                        y: prevHeight
+                    });
+                    
+                    // 保持平台高度不变
+                    while (i < platformEnd) {
+                        i++;
+                        gameState.terrain.push({ x: i * segmentWidth, y: prevHeight });
+                    }
+                }
+            }
+            
+            // 创建最后一个点
+            gameState.terrain.push({ x: canvas.width, y: prevHeight });
+            gameState.terrain.push({ x: canvas.width, y: canvas.height });
+        }
+        
+        // 绘制飞船
+        function drawShip() {
+            ctx.save();
+            ctx.translate(gameState.ship.x, gameState.ship.y);
+            ctx.rotate(gameState.ship.rotation * Math.PI / 180);
+            
+            // 飞船主体
+            ctx.fillStyle = '#a0a0ff';
+            ctx.beginPath();
+            ctx.moveTo(0, -gameState.ship.height / 2);
+            ctx.lineTo(-gameState.ship.width / 2, gameState.ship.height / 2);
+            ctx.lineTo(gameState.ship.width / 2, gameState.ship.height / 2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 飞船轮廓
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 推进器火焰
+            if (gameState.ship.thrusting && gameState.ship.fuel > 0) {
+                const flameHeight = 20 + Math.random() * 10;
+                ctx.fillStyle = `rgb(255, ${Math.floor(100 + Math.random() * 100)}, 0)`;
+                ctx.beginPath();
+                ctx.moveTo(-gameState.ship.width / 4, gameState.ship.height / 2);
+                ctx.lineTo(0, gameState.ship.height / 2 + flameHeight);
+                ctx.lineTo(gameState.ship.width / 4, gameState.ship.height / 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // 绘制地形
+        function drawTerrain() {
+            ctx.fillStyle = '#777';
+            ctx.beginPath();
+            ctx.moveTo(gameState.terrain[0].x, gameState.terrain[0].y);
+            
+            for (let i = 1; i < gameState.terrain.length; i++) {
+                ctx.lineTo(gameState.terrain[i].x, gameState.terrain[i].y);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+            
+            // 用不同颜色绘制平台
+            ctx.fillStyle = '#5a5';
+            gameState.platforms.forEach(platform => {
+                ctx.beginPath();
+                ctx.moveTo(platform.x1, platform.y);
+                ctx.lineTo(platform.x2, platform.y);
+                ctx.lineTo(platform.x2, platform.y + 5);
+                ctx.lineTo(platform.x1, platform.y + 5);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 平台发光效果
+                ctx.fillStyle = 'rgba(255, 255, 200, 0.3)';
+                ctx.fillRect(platform.x1, platform.y - 1, platform.x2 - platform.x1, 2);
+            });
+        }
+        
+        // 绘制星星
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            gameState.stars.forEach(star => {
+                // 让星星闪烁
+                const brightness = 0.7 + 0.3 * Math.sin(Date.now() / 1000 + star.x);
+                ctx.globalAlpha = brightness;
+                
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 随机添加一些大星星的光晕
+                if (star.size > 1.5) {
+                    ctx.globalAlpha = brightness * 0.3;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.globalAlpha = 1;
+            });
+        }
+        
+        // 检查与地形的碰撞
+        function checkCollision() {
+            if (gameState.ship.y + gameState.ship.height / 2 >= canvas.height) {
+                return true;
+            }
+            
+            // 找到飞船所在的两个地形点
+            let leftPoint, rightPoint;
+            for (let i = 0; i < gameState.terrain.length; i++) {
+                if (gameState.terrain[i].x >= gameState.ship.x) {
+                    leftPoint = gameState.terrain[i - 1];
+                    rightPoint = gameState.terrain[i];
+                    break;
+                }
+            }
+            
+            if (!leftPoint || !rightPoint) return false;
+            
+            // 在飞船x位置插值计算地面高度
+            const slope = (rightPoint.y - leftPoint.y) / (rightPoint.x - leftPoint.x);
+            const groundY = leftPoint.y + slope * (gameState.ship.x - leftPoint.x);
+            
+            // 检查飞船是否碰到地面
+            if (gameState.ship.y + gameState.ship.height / 2 >= groundY) {
+                // 检查是否成功着陆
+                const landingSpeed = Math.sqrt(
+                    gameState.ship.velocityX * gameState.ship.velocityX + 
+                    gameState.ship.velocityY * gameState.ship.velocityY
+                );
+                
+                const isOnPlatform = gameState.platforms.some(platform => 
+                    gameState.ship.x >= platform.x1 && 
+                    gameState.ship.x <= platform.x2 &&
+                    Math.abs((gameState.ship.y + gameState.ship.height / 2) - platform.y) < 5
+                );
+                
+                if (landingSpeed <= gameState.safeLandingSpeed && 
+                    Math.abs(gameState.ship.rotation) <= gameState.safeLandingAngle &&
+                    isOnPlatform) {
+                    // 成功着陆
+                    gameState.ship.landed = true;
+                    gameState.ship.score += Math.floor(gameState.ship.fuel * 10);
+                    scoreDisplay.textContent = `分数: ${gameState.ship.score}`;
+                    
+                    showMessage(
+                        '着陆成功!', 
+                        `分数: ${gameState.ship.score}\n速度: ${landingSpeed.toFixed(2)}\n角度: ${Math.abs(gameState.ship.rotation).toFixed(1)}°`
+                    );
+                } else {
+                    // 坠毁
+                    gameState.ship.crashed = true;
+                    
+                    let crashReason = '';
+                    if (landingSpeed > gameState.safeLandingSpeed) {
+                        crashReason += `速度过快 (${landingSpeed.toFixed(2)} > ${gameState.safeLandingSpeed})`;
+                    }
+                    if (Math.abs(gameState.ship.rotation) > gameState.safeLandingAngle) {
+                        if (crashReason) crashReason += '\n';
+                        crashReason += `角度过大 (${Math.abs(gameState.ship.rotation).toFixed(1)}° > ${gameState.safeLandingAngle}°)`;
+                    }
+                    if (!isOnPlatform) {
+                        if (crashReason) crashReason += '\n';
+                        crashReason += '未降落在平台上';
+                    }
+                    
+                    showMessage('坠毁!', crashReason);
+                }
+                
+                gameState.gameOver = true;
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // 显示消息
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            message.style.display = 'block';
+            restartBtn.style.display = 'block';
+        }
+        
+        // 游戏主循环
+        function gameLoop(timestamp) {
+            if (!gameState.lastTime) {
+                gameState.lastTime = timestamp;
+            }
+            
+            const deltaTime = timestamp - gameState.lastTime;
+            gameState.lastTime = timestamp;
+            
+            // 清空画布
+            ctx.fillStyle = '#000033';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制星星
+            drawStars();
+            
+            // 绘制地形
+            drawTerrain();
+            
+            if (!gameState.gameOver) {
+                // 处理控制
+                gameState.ship.thrusting = false;
+                
+                if (gameState.keys.up && gameState.ship.fuel > 0) {
+                    gameState.ship.velocityY -= Math.cos(gameState.ship.rotation * Math.PI / 180) * gameState.thrustPower;
+                    gameState.ship.velocityX += Math.sin(gameState.ship.rotation * Math.PI / 180) * gameState.thrustPower;
+                    gameState.ship.thrusting = true;
+                    gameState.ship.fuel -= 0.1;
+                    fuelBar.style.width = `${gameState.ship.fuel}%`;
+                }
+                
+                if (gameState.keys.left) {
+                    gameState.ship.rotation -= gameState.rotationSpeed;
+                }
+                
+                if (gameState.keys.right) {
+                    gameState.ship.rotation += gameState.rotationSpeed;
+                }
+                
+                // 应用重力
+                gameState.ship.velocityY += gameState.gravity;
+                
+                // 更新位置
+                gameState.ship.x += gameState.ship.velocityX;
+                gameState.ship.y += gameState.ship.velocityY;
+                
+                // 检查边界
+                if (gameState.ship.x < 0) {
+                    gameState.ship.x = 0;
+                    gameState.ship.velocityX = 0;
+                } else if (gameState.ship.x > canvas.width) {
+                    gameState.ship.x = canvas.width;
+                    gameState.ship.velocityX = 0;
+                }
+                
+                if (gameState.ship.y < 0) {
+                    gameState.ship.y = 0;
+                    gameState.ship.velocityY = 0;
+                }
+                
+                // 检查碰撞
+                checkCollision();
+                
+                // 检查燃料
+                if (gameState.ship.fuel <= 0) {
+                    fuelBar.style.backgroundColor = 'red';
+                }
+            }
+            
+            // 绘制飞船
+            drawShip();
+            
+            // 继续游戏循环
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 开始游戏
+        function startGame() {
+            startScreen.style.display = 'none';
+            initGame();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 开始按钮事件
+        startButton.addEventListener('click', startGame);
+        
+        // 键盘事件监听
+        window.addEventListener('keydown', (e) => {
+            if (gameState.gameOver) return;
+            
+            switch (e.key) {
+                case 'a':
+                case 'ArrowLeft':
+                    gameState.keys.left = true;
+                    break;
+                case 'd':
+                case 'ArrowRight':
+                    gameState.keys.right = true;
+                    break;
+                case 'w':
+                case 'ArrowUp':
+                    gameState.keys.up = true;
+                    break;
+                case ' ': // 空格键也可以作为推进器
+                    gameState.keys.up = true;
+                    break;
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            switch (e.key) {
+                case 'a':
+                case 'ArrowLeft':
+                    gameState.keys.left = false;
+                    break;
+                case 'd':
+                case 'ArrowRight':
+                    gameState.keys.right = false;
+                    break;
+                case 'w':
+                case 'ArrowUp':
+                case ' ':
+                    gameState.keys.up = false;
+                    break;
+            }
+        });
+        
+        // 触摸控制事件监听
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            gameState.keys.left = true;
+        });
+        
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            gameState.keys.left = false;
+        });
+        
+        leftBtn.addEventListener('mousedown', (e) => {
+            gameState.keys.left = true;
+        });
+        
+        leftBtn.addEventListener('mouseup', (e) => {
+            gameState.keys.left = false;
+        });
+        
+        leftBtn.addEventListener('mouseleave', (e) => {
+            gameState.keys.left = false;
+        });
+        
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            gameState.keys.right = true;
+        });
+        
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            gameState.keys.right = false;
+        });
+        
+        rightBtn.addEventListener('mousedown', (e) => {
+            gameState.keys.right = true;
+        });
+        
+        rightBtn.addEventListener('mouseup', (e) => {
+            gameState.keys.right = false;
+        });
+        
+        rightBtn.addEventListener('mouseleave', (e) => {
+            gameState.keys.right = false;
+        });
+        
+        thrustBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            gameState.keys.up = true;
+        });
+        
+        thrustBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            gameState.keys.up = false;
+        });
+        
+        thrustBtn.addEventListener('mousedown', (e) => {
+            gameState.keys.up = true;
+        });
+        
+        thrustBtn.addEventListener('mouseup', (e) => {
+            gameState.keys.up = false;
+        });
+        
+        thrustBtn.addEventListener('mouseleave', (e) => {
+            gameState.keys.up = false;
+        });
+        
+        // 重新开始按钮
+        restartBtn.addEventListener('click', () => {
+            message.style.display = 'none';
+            initGame();
+        });
+        
+        // 防止触摸滚动
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.className.includes('control-btn')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // 添加Enter键开始游戏功能
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && startScreen.style.display !== 'none') {
+                startGame();
+            }
+        });
+    </script>
+</body>
+</html>
